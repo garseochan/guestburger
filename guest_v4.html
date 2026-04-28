@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>버거 스택!</title>
+<style>
+html{touch-action:manipulation}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation}
+body{background:#0d0400;font-family:'Black Han Sans',sans-serif;color:#fff;max-width:430px;margin:0 auto;min-height:100vh;overflow-x:hidden;overflow-y:auto}
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
+.noto{font-family:'Noto Sans KR',sans-serif}
+button{touch-action:manipulation;cursor:pointer;border:none;font-family:'Black Han Sans',sans-serif;transition:all .15s}
+button:active{transform:scale(.96)}
+.pbtn{background:linear-gradient(135deg,#D4850A,#FF6B00);color:#fff;border-radius:14px;padding:14px 0;width:100%;font-size:17px;box-shadow:0 4px 20px rgba(212,133,10,.4)}
+.screen{display:none;flex-direction:column;min-height:100vh}
+.screen.active{display:flex}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:0 28px;z-index:999;backdrop-filter:blur(6px)}
+.mbox{background:linear-gradient(160deg,#1e0e02,#120800);border:1px solid rgba(212,133,10,.4);border-radius:24px;padding:28px 24px;width:100%;text-align:center;animation:mb .3s ease}
+@keyframes mb{from{transform:scale(.3);opacity:0}60%{transform:scale(1.1)}to{transform:scale(1);opacity:1}}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes bi{from{transform:scale(.3);opacity:0}60%{transform:scale(1.15)}to{transform:scale(1);opacity:1}}
+#board{display:grid;border:2px solid rgba(212,133,10,.4);border-radius:10px;overflow:hidden;background:#080402}
+.cell{display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.03)}
+.cell.flash{background:rgba(255,220,50,.55)!important}
+</style>
+</head>
+<body>
+
+<!-- 인트로 -->
+<div id="s-intro" class="screen active">
+  <div style="padding:28px 20px 60px;display:flex;flex-direction:column;align-items:center;text-align:center">
+    <div style="font-size:72px;animation:fl 3s ease-in-out infinite">🍔</div>
+    <div style="font-size:32px;background:linear-gradient(90deg,#D4850A,#FF9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px;margin-top:4px">버거 스택!</div>
+    <div class="noto" style="font-size:13px;color:#888;margin-top:4px;margin-bottom:16px">1분 30초 안에 버거를 최대한 많이 완성하라! 🔥</div>
+
+    <!-- 레시피 -->
+    <div style="background:rgba(212,133,10,.08);border:1px solid rgba(212,133,10,.25);border-radius:16px;padding:14px 16px;width:100%;margin-bottom:14px;text-align:left">
+      <div style="font-size:13px;margin-bottom:10px">🍔 버거 완성 순서 (아래 → 위)</div>
+      <div style="display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap">
+        <div style="text-align:center">
+          <!-- 아래번: 아래가 납작한 반원 -->
+          <svg width="30" height="30" viewBox="0 0 60 40"><path d="M5 10 Q5 35 30 35 Q55 35 55 10 Z" fill="#E8A020"/><path d="M8 13 Q8 32 30 32 Q52 32 52 13 Z" fill="#F5B830"/><ellipse cx="30" cy="10" rx="25" ry="5" fill="#FFD060" opacity="0.4"/><ellipse cx="30" cy="35" rx="27" ry="5" fill="#a86000" opacity="0.5"/></svg>
+          <div class="noto" style="font-size:9px;color:#E8A020;margin-top:2px">아래번</div>
+        </div>
+        <span style="color:#555;font-size:11px">→</span>
+        <div style="text-align:center"><span style="font-size:22px">🥬</span><div class="noto" style="font-size:9px;color:#4CAF50;margin-top:2px">양상추</div></div>
+        <span style="color:#555;font-size:11px">→</span>
+        <div style="text-align:center"><span style="font-size:22px">🍅</span><div class="noto" style="font-size:9px;color:#F44336;margin-top:2px">토마토</div></div>
+        <span style="color:#555;font-size:11px">→</span>
+        <div style="text-align:center"><span style="font-size:22px">🥩</span><div class="noto" style="font-size:9px;color:#8D6E63;margin-top:2px">패티</div></div>
+        <span style="color:#555;font-size:11px">→</span>
+        <div style="text-align:center"><span style="font-size:22px">🧀</span><div class="noto" style="font-size:9px;color:#FFC107;margin-top:2px">치즈</div></div>
+        <span style="color:#555;font-size:11px">→</span>
+        <div style="text-align:center">
+          <!-- 위번: 위로 볼록한 반원 -->
+          <svg width="30" height="30" viewBox="0 0 60 40"><path d="M5 30 Q5 5 30 5 Q55 5 55 30 Z" fill="#E8A020"/><path d="M8 28 Q8 8 30 8 Q52 8 52 28 Z" fill="#F5B830"/><ellipse cx="30" cy="28" rx="22" ry="5" fill="#FFD060" opacity="0.45"/><ellipse cx="18" cy="16" rx="5" ry="3.5" fill="#FFD060" opacity="0.3"/><ellipse cx="40" cy="13" rx="4" ry="3" fill="#FFD060" opacity="0.3"/></svg>
+          <div class="noto" style="font-size:9px;color:#E8A020;margin-top:2px">위번🔄</div>
+        </div>
+      </div>
+      <div class="noto" style="font-size:10px;color:#666;margin-top:8px">위번은 🔄 버튼으로 뒤집어야 해요!</div>
+    </div>
+
+    <!-- 남은 횟수 -->
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 16px;width:100%;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+      <div class="noto" style="font-size:13px;color:#aaa">남은 게임 횟수</div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <span id="intro-plays" style="font-size:28px;color:#FF9500">5</span>
+        <span class="noto" style="font-size:12px;color:#666">/ 5회</span>
+      </div>
+    </div>
+
+    <button class="pbtn" id="start-btn" onclick="startGame()">🍔 게임 시작!</button>
+
+    <!-- 공유 -->
+    <div style="display:flex;gap:8px;margin-top:10px;width:100%">
+      <button onclick="doKakao(0)" style="flex:1;padding:12px 0;border:none;border-radius:13px;background:#FEE500;color:#191919;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.632 1.608 4.938 4 6.32V20l3.5-2.1c.82.13 1.67.1 2.5.1 5.523 0 10-3.477 10-7.5S17.523 3 12 3z"/></svg>
+        카카오 공유
+      </button>
+      <button id="copy-intro" onclick="doCopy('copy-intro')" style="flex:1;padding:12px 0;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.06);color:#ccc;font-size:14px">🔗 URL 복사</button>
+    </div>
+
+    <!-- 경품 안내 -->
+    <div style="background:linear-gradient(135deg,rgba(212,133,10,.1),rgba(255,100,0,.05));border:1px solid rgba(212,133,10,.3);border-radius:14px;padding:14px 16px;width:100%;margin-top:14px;text-align:left">
+      <div style="font-size:13px;margin-bottom:10px">🏆 매주 랭킹별 경품 (로그인 고객 대상)</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(255,215,0,.08);border-radius:10px;padding:8px 10px">
+          <span style="font-size:18px">🥇</span>
+          <div><div style="font-size:13px;color:#FFD700">1등 ~ 50,000등</div><div class="noto" style="font-size:11px;color:#aaa">OOO 버거 50% 할인 쿠폰</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(192,192,192,.08);border-radius:10px;padding:8px 10px">
+          <span style="font-size:18px">🥈</span>
+          <div><div style="font-size:13px;color:#C0C0C0">50,001등 ~ 100,000등</div><div class="noto" style="font-size:11px;color:#aaa">OOO 버거 40% 할인 쿠폰</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(205,127,50,.08);border-radius:10px;padding:8px 10px">
+          <span style="font-size:18px">🥉</span>
+          <div><div style="font-size:13px;color:#CD7F32">100,001등 ~ 200,001등</div><div class="noto" style="font-size:11px;color:#aaa">OOO 버거 20% 할인 쿠폰</div></div>
+        </div>
+      </div>
+      <div class="noto" style="font-size:10px;color:#666;margin-top:8px">동점일 경우 등록순 · 매주 초기화</div>
+    </div>
+
+    <!-- 유의사항 -->
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px 14px;width:100%;margin-top:10px;text-align:left">
+      <div class="noto" style="font-size:11px;color:#666;font-weight:700;margin-bottom:6px">📋 유의사항</div>
+      <div class="noto" style="font-size:10px;color:#555;line-height:1.9">
+        · 비로그인 시 5회 무료 게임 가능<br>
+        · 랭킹 등록 및 보상 수령은 OK캐쉬백 로그인 필요<br>
+        · 쿠폰 발급 1회당 +1회 (최대 10회)<br>
+        · 쿠폰 사용 1회당 +10회 (무제한)<br>
+        · 동점 시 등록 순으로 순위 결정<br>
+        · 한 아이디당 가장 최신 점수로 적용
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 게임 -->
+<div id="s-game" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid rgba(212,133,10,.12)">
+    <div style="position:relative;width:52px;height:52px">
+      <svg width="52" height="52" style="transform:rotate(-90deg)">
+        <circle cx="26" cy="26" r="21" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="4"/>
+        <circle id="timer-ring" cx="26" cy="26" r="21" fill="none" stroke="#4CAF50" stroke-width="4" stroke-dasharray="131.9" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset 1s linear,stroke .3s"/>
+      </svg>
+      <div id="timer-txt" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#4CAF50">90</div>
+    </div>
+    <div style="text-align:center;flex:1;padding:0 6px">
+      <div class="noto" style="font-size:9px;color:#888;margin-bottom:3px">완성 순서 (아래→위)</div>
+      <div style="display:flex;gap:2px;justify-content:center;align-items:center">
+        <svg width="16" height="16" viewBox="0 0 60 40"><path d="M5 10 Q5 35 30 35 Q55 35 55 10 Z" fill="#E8A020"/><path d="M8 13 Q8 32 30 32 Q52 32 52 13 Z" fill="#F5B830"/><ellipse cx="30" cy="35" rx="27" ry="5" fill="#a86000" opacity="0.5"/></svg>
+        <span style="color:#555;font-size:8px">→</span><span style="font-size:14px">🥬</span>
+        <span style="color:#555;font-size:8px">→</span><span style="font-size:14px">🍅</span>
+        <span style="color:#555;font-size:8px">→</span><span style="font-size:14px">🥩</span>
+        <span style="color:#555;font-size:8px">→</span><span style="font-size:14px">🧀</span>
+        <span style="color:#555;font-size:8px">→</span>
+        <svg width="16" height="16" viewBox="0 0 60 40"><path d="M5 30 Q5 5 30 5 Q55 5 55 30 Z" fill="#E8A020"/><path d="M8 28 Q8 8 30 8 Q52 8 52 28 Z" fill="#F5B830"/><ellipse cx="30" cy="28" rx="22" ry="5" fill="#FFD060" opacity="0.45"/></svg>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div class="noto" style="font-size:10px;color:#888">버거</div>
+      <div id="burger-count" style="font-size:20px;color:#FF9500;line-height:1">🍔×0</div>
+      <div class="noto" style="font-size:9px;color:#888;margin-top:3px">NEXT</div>
+      <div id="next-cell" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #E8A020;background:rgba(232,160,32,.15);display:flex;align-items:center;justify-content:center;margin-left:auto"></div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:center;padding:4px 0"><div id="board"></div></div>
+  <div id="cur-hint" class="noto" style="text-align:center;font-size:11px;height:16px;margin-top:2px"></div>
+  <div style="padding:5px 12px 10px;display:grid;grid-template-columns:1fr 1.5fr 1fr 1fr;gap:5px">
+    <button onclick="moveLeft()" style="padding:12px 0;border:1px solid rgba(212,133,10,.22);background:rgba(212,133,10,.07);border-radius:12px;color:#D4850A;font-size:20px">◀</button>
+    <button onclick="hardDrop()" style="padding:12px 0;border:1px solid rgba(212,133,10,.5);background:rgba(212,133,10,.18);border-radius:12px;color:#FF9500;font-size:12px">▼▼ 내리기</button>
+    <button id="flip-btn" onclick="flipBun()" style="padding:12px 0;border:1px solid rgba(212,133,10,.22);background:rgba(212,133,10,.07);border-radius:12px;color:#D4850A;font-size:20px;opacity:.3">🔄</button>
+    <button onclick="moveRight()" style="padding:12px 0;border:1px solid rgba(212,133,10,.22);background:rgba(212,133,10,.07);border-radius:12px;color:#D4850A;font-size:20px">▶</button>
+  </div>
+</div>
+
+<!-- 결과 -->
+<div id="s-result" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;padding:32px 20px 60px;text-align:center">
+    <div style="font-size:56px;animation:bi .6s ease">🍔</div>
+    <div class="noto" style="font-size:13px;color:#888;margin-top:8px">게임 종료!</div>
+    <div id="res-burgers" style="font-size:52px;color:#FF9500;text-shadow:0 0 30px rgba(255,149,0,.5);animation:bi .8s ease;line-height:1.1">0개</div>
+    <div class="noto" style="font-size:13px;color:#888;margin-top:4px">완성한 버거</div>
+
+    <!-- 예상 순위 -->
+    <div style="background:linear-gradient(135deg,rgba(212,133,10,.15),rgba(255,100,0,.08));border:1px solid rgba(212,133,10,.35);border-radius:18px;padding:18px 20px;width:100%;margin-top:16px">
+      <div class="noto" style="font-size:12px;color:#aaa;margin-bottom:6px">예상 순위</div>
+      <div id="est-rank" style="font-size:32px;color:#FFD700;font-weight:500">상위 —%</div>
+      <div class="noto" style="font-size:10px;color:#666;margin-top:6px">※ 정확한 순위는 OK캐쉬백 로그인 후 확인</div>
+    </div>
+
+    <!-- 남은 횟수 -->
+    <div id="plays-left-box" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 16px;width:100%;margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+      <div class="noto" style="font-size:13px;color:#aaa">남은 게임 횟수</div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <span id="result-plays" style="font-size:24px;color:#FF9500">4</span>
+        <span class="noto" style="font-size:12px;color:#666">회</span>
+      </div>
+    </div>
+
+    <!-- 다시 도전 -->
+    <button id="retry-btn" onclick="tryRetry()" style="width:100%;padding:15px 0;border:none;border-radius:14px;background:linear-gradient(135deg,#D4850A,#FF6B00);color:#fff;font-size:16px;margin-top:14px;box-shadow:0 4px 20px rgba(212,133,10,.4)">
+      🍔 게임 다시 도전!
+    </button>
+
+    <!-- 공유 -->
+    <div style="display:flex;gap:8px;margin-top:10px;width:100%">
+      <button onclick="doKakao(1)" style="flex:1;padding:13px 0;border:none;border-radius:13px;background:#FEE500;color:#191919;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.632 1.608 4.938 4 6.32V20l3.5-2.1c.82.13 1.67.1 2.5.1 5.523 0 10-3.477 10-7.5S17.523 3 12 3z"/></svg>
+        카카오 공유
+      </button>
+      <button id="copy-result" onclick="doCopy('copy-result')" style="flex:1;padding:13px 0;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.06);color:#ccc;font-size:14px">🔗 URL 복사</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달 -->
+<div id="modal-wrap" style="display:none">
+  <div class="overlay">
+    <div class="mbox">
+      <div id="m-emoji" style="font-size:52px;margin-bottom:10px"></div>
+      <div id="m-title" style="font-size:19px;line-height:1.4;white-space:pre-line;margin-bottom:8px"></div>
+      <div id="m-desc" class="noto" style="font-size:13px;color:#aaa;line-height:1.8;white-space:pre-line"></div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button id="m-ok" style="flex:1;padding:13px 0;border:none;border-radius:12px;background:linear-gradient(135deg,#D4850A,#FF6B00);color:#fff;font-size:15px"></button>
+        <button onclick="hideModal()" style="width:46px;height:46px;border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.06);color:#888;font-size:18px">✕</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLS=6,ROWS=12,CELL=46,GAME_TIME=90,BASE_PLAYS=5;
+const OKC_URL='https://m.okcashbag.com/g/w/v1.0/fabhot/list.html';
+const ORDER=['BOT','LT','TM','PT','CH','TOP'];
+const INFO={
+  TOP:{e:'',label:'위번',color:'#E8A020',bg:'rgba(232,160,32,.15)',bd:'#E8A020'},
+  BOT:{e:'',label:'아래번',color:'#E8A020',bg:'rgba(232,160,32,.15)',bd:'#E8A020'},
+  LT:{e:'🥬',label:'양상추',color:'#4CAF50',bg:'rgba(76,175,80,.15)',bd:'#4CAF50'},
+  TM:{e:'🍅',label:'토마토',color:'#F44336',bg:'rgba(244,67,54,.15)',bd:'#F44336'},
+  PT:{e:'🥩',label:'패티',color:'#8D6E63',bg:'rgba(141,110,99,.2)',bd:'#8D6E63'},
+  CH:{e:'🧀',label:'치즈',color:'#FFC107',bg:'rgba(255,193,7,.18)',bd:'#FFC107'},
+};
+// 아래번: 아래가 납작한 반원
+const bunB=s=>`<svg width="${s}" height="${s}" viewBox="0 0 60 40" style="display:block"><path d="M5 10 Q5 35 30 35 Q55 35 55 10 Z" fill="#E8A020"/><path d="M8 13 Q8 32 30 32 Q52 32 52 13 Z" fill="#F5B830"/><ellipse cx="30" cy="10" rx="25" ry="5" fill="#FFD060" opacity="0.35"/><ellipse cx="30" cy="35" rx="27" ry="5" fill="#a86000" opacity="0.5"/></svg>`;
+// 위번: 위로 볼록한 반원
+const bunT=s=>`<svg width="${s}" height="${s}" viewBox="0 0 60 40" style="display:block"><path d="M5 30 Q5 5 30 5 Q55 5 55 30 Z" fill="#E8A020"/><path d="M8 28 Q8 8 30 8 Q52 8 52 28 Z" fill="#F5B830"/><ellipse cx="30" cy="28" rx="22" ry="5" fill="#FFD060" opacity="0.45"/><ellipse cx="18" cy="16" rx="5" ry="3.5" fill="#FFD060" opacity="0.3"/><ellipse cx="40" cy="13" rx="4" ry="3" fill="#FFD060" opacity="0.3"/></svg>`;
+
+const emptyBoard=()=>Array.from({length:ROWS},()=>Array(COLS).fill(null));
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function fixCons(a){for(let i=1;i<a.length;i++){if(a[i]===a[i-1]){for(let j=i+1;j<a.length;j++){if(a[j]!==a[i-1]){[a[i],a[j]]=[a[j],a[i]];break;}}}}}
+function buildBag(){
+  const prefix=['BOT','LT','BOT','LT','BOT','LT'];
+  const rest=shuffle(['TM','TM','TM','TM','TM','PT','PT','PT','PT','PT','CH','CH','CH','CH','CH','TOP','TOP','TOP','TOP','TOP','BOT','BOT','LT','LT']);
+  fixCons(rest);
+  if(rest.length>0&&rest[0]===prefix[prefix.length-1]){
+    for(let j=1;j<rest.length;j++){if(rest[j]!==prefix[prefix.length-1]){[rest[0],rest[j]]=[rest[j],rest[0]];break;}}
+  }
+  return [...prefix,...rest];
+}
+let bag=[],lastType=null;
+function refillBag(){bag=buildBag();if(lastType&&bag[0]===lastType&&bag.length>1)[bag[0],bag[1]]=[bag[1],bag[0]];}
+function rand(){if(!bag.length)refillBag();const t=bag.shift();lastType=t;return t;}
+
+let plays=BASE_PLAYS,board,curCol,curRow,curType,nextType,burgers,timeLeft,timerID,dropID,gameActive=false,isLanding=false;
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function updateIntroUI(){
+  const el=document.getElementById('intro-plays');
+  el.textContent=plays; el.style.color=plays>0?'#FF9500':'#555';
+  const btn=document.getElementById('start-btn');
+  btn.textContent=plays>0?'🍔 게임 시작!':'🎫 쿠폰 받고 시작';
+  btn.onclick=plays>0?startGame:goOKC;
+}
+
+function estimateRank(n){
+  const ranges=[[90,100],[75,89],[50,74],[30,49],[10,29],[5,9],[2,4],[0.1,1]];
+  const r=ranges[Math.min(n,7)];
+  const v=Math.random()*(r[1]-r[0])+r[0];
+  return v<1?'상위 '+v.toFixed(1)+'%':'상위 '+Math.round(v)+'%';
+}
+
+function goOKC(){window.location.href=OKC_URL;}
+
+function startGame(){
+  plays--; bag=[]; board=emptyBoard();
+  curCol=Math.floor(COLS/2); curRow=0;
+  burgers=0; timeLeft=GAME_TIME; gameActive=true; isLanding=false;
+  curType=rand(); nextType=rand();
+  buildBoard(); renderBoard();
+  clearInterval(timerID); clearInterval(dropID);
+  startTimer(); startDrop();
+  show('s-game'); updateIntroUI();
+}
+
+function tryRetry(){
+  if(plays<=0){
+    showModal('🍔','게임기회가 모두\n소진되었습니다.',
+      'OK캐쉬백 앱을 방문하면\n추가 게임기회를 얻을 수 있습니다.\n이동하시겠습니까?',
+      '앱으로 이동',goOKC);
+  } else startGame();
+}
+
+function startTimer(){
+  timerID=setInterval(()=>{
+    if(!gameActive)return; timeLeft--;
+    const circ=2*Math.PI*21,ring=document.getElementById('timer-ring'),txt=document.getElementById('timer-txt');
+    ring.style.strokeDashoffset=circ*(1-timeLeft/GAME_TIME);
+    const col=timeLeft<=10?'#F44336':timeLeft<=20?'#FF9800':'#4CAF50';
+    ring.style.stroke=col;txt.style.color=col;txt.textContent=timeLeft;
+    if(timeLeft<=0){clearInterval(timerID);clearInterval(dropID);gameActive=false;endGame();}
+  },1000);
+}
+function startDrop(){
+  dropID=setInterval(()=>{
+    if(!gameActive||isLanding)return;
+    if(curRow+1>=ROWS||board[curRow+1][curCol]!==null)land();
+    else{curRow++;renderBoard();}
+  },400);
+}
+function land(){
+  if(isLanding)return;isLanding=true;
+  let lr=-1;
+  for(let r=ROWS-1;r>=0;r--){if(board[r][curCol]===null){lr=r;break;}}
+  if(lr===-1){isLanding=false;spawnNext();return;}
+  board[lr][curCol]=curType;
+  const done=[];
+  for(let c=0;c<COLS;c++){
+    const stack=[];
+    for(let r=ROWS-1;r>=0;r--){if(board[r][c]!==null)stack.push(board[r][c]);else break;}
+    if(stack.length>=ORDER.length&&ORDER.every((t,i)=>stack[i]===t))done.push(c);
+  }
+  if(done.length>0){
+    done.forEach(c=>{for(let r=ROWS-ORDER.length;r<ROWS;r++){const d=document.getElementById('c'+r+'_'+c);if(d)d.classList.add('flash');}});
+    burgers+=done.length;
+    document.getElementById('burger-count').textContent='🍔×'+burgers;
+    setTimeout(()=>{
+      done.forEach(c=>{
+        const rem=[];
+        for(let r=0;r<ROWS-ORDER.length;r++)if(board[r][c]!==null)rem.push(board[r][c]);
+        for(let r=0;r<ROWS;r++)board[r][c]=null;
+        rem.reverse().forEach((t,i)=>{board[ROWS-1-i][c]=t;});
+      });
+      isLanding=false;spawnNext();
+    },450);
+    return;
+  }
+  isLanding=false;spawnNext();
+}
+function spawnNext(){
+  curType=nextType;nextType=rand();curRow=0;curCol=Math.floor(COLS/2);
+  if(board[0].some(c=>c!==null)){gameActive=false;clearInterval(timerID);clearInterval(dropID);endGame();return;}
+  renderBoard();
+}
+function endGame(){
+  document.getElementById('res-burgers').textContent=burgers+'개';
+  document.getElementById('est-rank').textContent=estimateRank(burgers);
+  document.getElementById('result-plays').textContent=plays;
+  if(plays<=0)document.getElementById('plays-left-box').style.display='none';
+  else document.getElementById('plays-left-box').style.display='flex';
+  show('s-result');
+}
+
+function buildBoard(){
+  const b=document.getElementById('board');
+  b.style.gridTemplateColumns='repeat('+COLS+','+CELL+'px)';
+  b.style.gridTemplateRows='repeat('+ROWS+','+CELL+'px)';
+  b.innerHTML='';
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const d=document.createElement('div');
+    d.className='cell';d.style.width=CELL+'px';d.style.height=CELL+'px';d.id='c'+r+'_'+c;b.appendChild(d);
+  }
+}
+function setCell(d,t,glow){
+  const i=INFO[t];const sz=glow?40:36;
+  d.style.background=i.bg;d.style.border=glow?'2px solid '+i.bd:'1px solid '+i.bd+'55';
+  d.style.transform=glow?'scale(1.06)':'scale(1)';d.style.boxShadow=glow?'0 0 12px '+i.color+'66':'none';
+  if(t==='TOP'){d.innerHTML=bunT(sz);d.style.fontSize='';}
+  else if(t==='BOT'){d.innerHTML=bunB(sz);d.style.fontSize='';}
+  else{d.innerHTML='';d.textContent=i.e;d.style.fontSize=glow?'26px':'22px';}
+}
+function ghostRow(){for(let r=ROWS-1;r>=0;r--){if(board[r][curCol]===null)return r;}return -1;}
+function renderBoard(){
+  const gr=ghostRow();
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const d=document.getElementById('c'+r+'_'+c);
+    const isFalling=r===curRow&&c===curCol,isGhost=c===curCol&&r===gr&&!isFalling&&board[r][c]===null&&gr!==curRow;
+    const t=isFalling?curType:board[r][c];
+    d.className='cell';d.style.fontSize='';d.style.background='';d.style.border='1px solid rgba(255,255,255,.03)';d.style.transform='';d.style.boxShadow='';d.innerHTML='';d.textContent='';
+    if(t)setCell(d,t,isFalling);
+    else if(isGhost)d.style.border='1px dashed rgba(212,133,10,.2)';
+  }
+  const nc=document.getElementById('next-cell'),ni=INFO[nextType];
+  nc.style.background=ni.bg;nc.style.border='1.5px solid '+ni.bd;nc.style.fontSize='';nc.innerHTML='';nc.textContent='';
+  if(nextType==='TOP')nc.innerHTML=bunT(28);
+  else if(nextType==='BOT')nc.innerHTML=bunB(28);
+  else{nc.textContent=ni.e;nc.style.fontSize='20px';}
+  const ci=INFO[curType];
+  document.getElementById('cur-hint').textContent=ci.label+' 낙하 중'+(curType==='TOP'||curType==='BOT'?' — 🔄 뒤집기 가능':'');
+  document.getElementById('cur-hint').style.color=ci.color;
+  document.getElementById('flip-btn').style.opacity=(curType==='TOP'||curType==='BOT')?'1':'0.3';
+}
+function moveLeft(){if(!gameActive)return;curCol=Math.max(0,curCol-1);renderBoard();}
+function moveRight(){if(!gameActive)return;curCol=Math.min(COLS-1,curCol+1);renderBoard();}
+function flipBun(){if(!gameActive)return;if(curType==='TOP')curType='BOT';else if(curType==='BOT')curType='TOP';renderBoard();}
+function hardDrop(){if(!gameActive||isLanding)return;land();}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'){moveLeft();e.preventDefault();}
+  if(e.key==='ArrowRight'){moveRight();e.preventDefault();}
+  if(e.key==='ArrowDown'||e.key===' '){hardDrop();e.preventDefault();}
+  if(e.key==='ArrowUp'||e.key==='r'||e.key==='R'){flipBun();e.preventDefault();}
+});
+let tx=null;
+document.getElementById('s-game').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+document.getElementById('s-game').addEventListener('touchend',e=>{
+  if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>28){dx>0?moveRight():moveLeft();}tx=null;
+});
+
+function showModal(emoji,title,desc,okLabel,okFn){
+  document.getElementById('m-emoji').textContent=emoji;
+  document.getElementById('m-title').textContent=title;
+  document.getElementById('m-desc').textContent=desc;
+  document.getElementById('m-ok').textContent=okLabel;
+  document.getElementById('m-ok').onclick=()=>{hideModal();okFn();};
+  document.getElementById('modal-wrap').style.display='block';
+}
+function hideModal(){document.getElementById('modal-wrap').style.display='none';}
+
+const shareUrl=location.href.split('?')[0]+'?ref=USER123';
+function doKakao(fromResult){
+  const msg=fromResult?'🍔 버거 스택! 버거 '+(burgers||0)+'개 완성! 👉 '+shareUrl:'🍔 버거 스택! 도전해봐요! 👉 '+shareUrl;
+  if(window.Kakao&&window.Kakao.isInitialized()){
+    window.Kakao.Share.sendDefault({objectType:'feed',content:{title:'🍔 버거 스택!',description:msg,link:{mobileWebUrl:shareUrl,webUrl:shareUrl}},buttons:[{title:'나도 도전!',link:{mobileWebUrl:shareUrl,webUrl:shareUrl}}]});
+  } else doCopy('copy-intro');
+}
+function doCopy(btnId){
+  navigator.clipboard&&navigator.clipboard.writeText('🍔 버거 스택! 도전해봐요! 👉 '+shareUrl);
+  const b=document.getElementById(btnId);
+  if(!b)return;const orig=b.textContent;b.textContent='✅ 복사됨!';b.style.color='#4CAF50';
+  setTimeout(()=>{b.textContent=orig;b.style.color='';},2500);
+}
+document.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
+document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+updateIntroUI();
+</script>
+</body>
+</html>
